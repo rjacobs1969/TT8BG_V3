@@ -1,1 +1,1 @@
-Placeholder
+This hardware and software design for a retro inspired 8 bit computer
