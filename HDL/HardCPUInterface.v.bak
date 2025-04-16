@@ -1,0 +1,45 @@
+module HardCPUInterface (
+    input wire clk,           // FPGA-generated clock signal
+    input wire reset,         // Reset signal
+    input wire irq, nmi, abt, // Interrupt signals
+    input wire [15:0] address, // Address bus (always input)
+    inout wire [7:0] data,     // Data bus (bidirectional)
+    input wire rw,             // Read/Write signal from CPU
+    input wire vp,             // Vector Pull signal from CPU
+    output reg [7:0] bank_addr // Latched bank address
+);
+
+    // Internal signals
+    reg [7:0] data_out;
+    reg data_dir; // Direction control: 1 = output to CPU, 0 = input from CPU
+
+    assign data = data_dir ? data_out : 8'bz; // Tri-state logic for bidirectional data bus
+
+    // Latching the bank address on the rising edge of clock when clock is low
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            bank_addr <= 8'b0; // Reset bank address
+        end else if (!clk) begin
+            bank_addr <= data; // Latch bank address
+        end
+    end
+
+    // Handling reads and writes based on rw and clk signals
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            data_out <= 8'b0; // Reset data output
+            data_dir <= 0;    // Default to input mode
+        end else if (rw && clk) begin
+            data_dir <= 1;     // Output mode: CPU reads from FPGA
+            // Provide data to CPU (example: read from memory or registers)
+            data_out <= 8'hFF; // Placeholder value
+        end else if (!rw && clk) begin
+            data_dir <= 0;     // Input mode: CPU writes to FPGA
+            // Capture data from CPU (example: write to memory or registers)
+            // Here you could add logic to handle the incoming data
+        end
+    end
+
+    // Additional interrupt logic can be added here based on irq, nmi, abt, vp
+
+endmodule
